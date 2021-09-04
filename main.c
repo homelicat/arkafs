@@ -10,21 +10,18 @@
 #include "h/dir.h"
 #include "h/debug.h"
 
-void main(int argc, char * argv[])
+void main(/*int argc, char * argv[]*/)
 {
 	fs_create("test.img",16);
 	fs_struct fs = fs_open("test.img");
-	
-	file_struct file;
-	bzero(&file,16);
-	memcpy(file.name,"test",4);
-	file.ptr=st_free(fs);
-	file.size=1;
-	
+
+	file_struct file = dir_make("test");
+	for(int i = 0; i<16;i++) file = file_add(fs,file);
+		
 	file_struct root = dir_root(fs);
 	byte fre = dir_free(fs,root);
 	dir_write(fs,root,file,fre);
-	dir_list(fs,root);
-	
+	//dir_list(fs,root);
+
 	fs_close(fs);
 }

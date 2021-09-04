@@ -3,6 +3,7 @@
 #include "../h/driveio.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 file_struct dir_read(fs_struct fs,file_struct dir,byte file_ptr)
 {
@@ -57,22 +58,26 @@ byte dir_free(fs_struct fs,file_struct dir)
 	return i;
 }
 
-void dir_list(fs_struct fs,file_struct file)
+file_struct dir_make(char * name)
 {
-	for (int i = 0; i<file.size*32;i++)
+	file_struct file;
+	bzero(&file,16);
+	memcpy(file.name,name,strlen(name));
+	return file;
+}
+
+file_struct dir_search(fs_struct fs,file_struct dir,char * name)
+{
+	char s[12]={0};
+	memcpy(s,name,strlen(name));
+	for(int i = 0; i<dir.size*32;i++)
 	{
-		file_struct f = dir_read(fs,file,i);
-		if(f.name[0]==0) continue;
-		for(int k = 0; k<12;k++)
+		file_struct f = dir_read(fs,dir,i);
+		if(!memcmp(s,f.name,12))
 		{
-			if(f.name[k]==0)
-			{
-				putchar(' ');
-			} else
-			{
-				putchar(f.name[k]);
-			}
+			return f;
 		}
-		printf(" %X %X\n",f.ptr,f.size);
 	}
+	file_struct f= dir_root(fs);
+	return f;
 }
