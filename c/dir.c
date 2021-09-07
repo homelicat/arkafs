@@ -58,6 +58,13 @@ byte dir_free(fs_struct fs,file_struct dir)
 	return i;
 }
 
+file_struct dir_null()
+{
+	file_struct file;
+	bzero(&file,16);
+	return file;
+}
+
 file_struct dir_make(char * name)
 {
 	file_struct file;
@@ -78,6 +85,6 @@ file_struct dir_search(fs_struct fs,file_struct dir,char * name)
 			return f;
 		}
 	}
-	file_struct f= dir_root(fs);
+	file_struct f= dir_null();
 	return f;
 }
