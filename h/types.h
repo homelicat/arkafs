@@ -1,21 +1,22 @@
 #include <stdio.h>
 
-typedef unsigned short st_ptr;
+//переопределение типов
 typedef unsigned short word;
 typedef unsigned char byte;
-typedef unsigned short sector;
 
+//дисковая структура
 typedef struct
 {
 	FILE * file;
-	sector size; //ptr 508	
-	sector sts;
-} fs_struct;
+	word size; //ptr 508	
+	word sts;
+} dstruct;
 
+//файловая структура
 typedef struct
 {
 	char name[12];
-	sector ptr;
-	sector size;
-} file_struct;
+	word ptr;
+	word size;
+} fstruct;
 

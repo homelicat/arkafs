@@ -3,13 +3,11 @@
 #include <malloc.h>
 #include <string.h>
 #include "../h/types.h"
-#include "../h/driveio.h"
+#include "../h/dio.h"
 #include "../h/st.h"
-#include "../h/fs.h"
-#include "../h/file.h"
 #include "../h/dir.h"
 #include "../h/debug.h"
-
+/*
 file_struct arka_path(fs_struct fs, char * ipath)
 {
 	if(ipath[0]!='/')return dir_null();
@@ -77,24 +75,25 @@ void arka_write(char * name,char * path)
 		return;
 	}
 	file_struct file = dir_search(fs,dir,path+i);
-	if (file.name[0]==0)
+	if (file.name[0]!=0)
 	{
-		//TODO запись в новый файл
-		puts("File not found");
+		arka_del(name,path);
+	}
+	word size = file.size;
+	file = file_add(fs,file);
+	if(size==file.size)
+	{
+		puts("Not enough space");
 		fs_close(fs);
 		return;
-	} else
+	}
+	sector * table = file_sectors(fs,file);
+	char c;
+	int ptr = 0;
+	while((c=getchar())!=EOF)
 	{
-		//TODO запись в существующий файл
-		puts("There are");
-		/*if (file.size==0) file = file_add(fs,file);
-		sector * table = file_sectors(fs,file);
-		char c;
-		int ptr = 0;
-		while((c=getchar())!=EOF)
-		{
-			
-		}*/
+		
+	}
 	}
 	fs_close(fs);
 }
@@ -109,11 +108,60 @@ void arka_read(char * name, char * path)
 		fs_close(fs);
 		return;
 	}
-	//TODO читать из файла
-	puts("There are");
+	sector * table = file_sectors(fs,file);
+	for(int i = 0;i<file.size;i++)
+	{
+		for(int j = 0;j<512;j++)
+		{
+			putchar(byte_read(fs,table[i],j));
+		}
+	}
+	free(table);
 	fs_close(fs);
-	//sector * table = 
 }
 
-void arka_del();
-
+void arka_del(char * name, char * path)
+{
+	fs_struct fs = fs_open(name);
+	file_struct file = arka_path(fs,path);
+	if(file.name[0]==0)
+	{
+		puts("File not found");
+		fs_close(fs);
+		return;
+	}
+	sector * table = file_sectors(fs,file);
+	for(int i = 0;i<file.size;i++)
+	{
+		st_write(fs,table[i],0);
+	}
+	int i = strlen(path);
+	while(path[i-1]!='/')i--;
+	char * dir_path = malloc(i);
+	memcpy(dir_path,path,i-1);
+	dir_path[i-1]=0;
+	file_struct dir = arka_path(fs,dir_path);
+	free(table);
+	table = file_sectors(fs,dir);
+	for(int i = 0;i<dir.size;i++)
+	{
+		for(int j = 0;j<32;j+=16)
+		{
+			byte arr[16] = {0};
+			for(int k=0;k<16;k++)
+			{
+				arr[k]=byte_read(fs,table[i],j*16+k);
+			}
+			if(!memcmp(&file,arr,16))
+			{
+				for(int k=0;k<16;k++)
+				{
+					byte_write(fs,table[i],j*16+k,0);
+				}
+			}
+		}
+	}
+	free(table);
+	fs_close(fs);
+}
+*/

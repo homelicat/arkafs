@@ -1,90 +1,104 @@
 #include "../h/types.h"
-#include "../h/file.h"
-#include "../h/driveio.h"
+#include "../h/dio.h"
+#include "../h/st.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-file_struct dir_read(fs_struct fs,file_struct dir,byte file_ptr)
+//считывает файловую структуру
+fstruct dirread(dstruct d,int ptr)
 {
-	sector * table = file_sectors(fs,dir);
-	file_struct file;
-	sector s = table[file_ptr/32];
-	for(int i = 0; i<12;i++)
+	fstruct file;
+	dread(d,ptr,&file,16);
+	return file;
+}
+
+//записывает файловую структуру
+void dirwrite(dstruct d,fstruct file,int ptr)
+{
+	dwrite(d,ptr,&file,16);
+}
+
+//ищет пустую ячейку в директории, 0 если нет
+int dirfree(dstruct d,fstruct dir)
+{
+	word * table = stfile(d,dir);
+	for (int i = 0; i<dir.size/512;i++)
 	{
-		file.name[i]=byte_read(fs,s,file_ptr*16+i);
+		for(int j = 0;j<512;j+=16)
+		{
+			fstruct f = dirread(d,table[i]*512+j);
+			if(f.name[0]==0)
+			{
+				int result = table[i]*512+j;
+				free(table);
+				return result;
+			}
+		}
 	}
-	file.ptr=word_read(fs,s,file_ptr*16+12);
-	file.size=word_read(fs,s,file_ptr*16+14);
 	free(table);
-	return file;
+	return 0;
 }
 
-file_struct dir_root(fs_struct fs)
-{
-	file_struct file;
-	for(int i = 0; i<12;i++)
-	{
-		file.name[i]=byte_read(fs,fs.sts+1,i);
-	}
-	file.ptr=word_read(fs,fs.sts+1,12);
-	file.size=word_read(fs,fs.sts+1,14);
-	return file;
-}
-
-void dir_write(fs_struct fs,file_struct dir,file_struct file,byte file_ptr)
-{
-	sector * table = file_sectors(fs,dir);
-	sector s = table[file_ptr/32];
-	for(int i = 0;i<12;i++)
-	{
-		byte_write(fs,s,file_ptr*16+i,(byte)file.name[i]);
-	}
-	word_write(fs,s,file_ptr*16+12,file.ptr);
-	word_write(fs,s,file_ptr*16+14,file.size);
-	free(table);
-}
-
-byte dir_free(fs_struct fs,file_struct dir)
-{
-	int i;
-	for (i = 0; i<dir.size*32+1;i++)
-	{
-		if(i==dir.size*32+1)break;
-		file_struct f = dir_read(fs,dir,i);
-		if(f.name[0]==0) break;	
-	}
-	if(i==dir.size*32+1) return 0;
-	return i;
-}
-
-file_struct dir_null()
-{
-	file_struct file;
-	bzero(&file,16);
-	return file;
-}
-
-file_struct dir_make(char * name)
-{
-	file_struct file;
-	bzero(&file,16);
-	memcpy(file.name,name,strlen(name));
-	return file;
-}
-
-file_struct dir_search(fs_struct fs,file_struct dir,char * name)
+//ищет ячейку по имени в директории, 0 если нет
+int dirsearch(dstruct d,fstruct dir,char * name)
 {
 	char s[12]={0};
 	memcpy(s,name,strlen(name));
-	for(int i = 0; i<dir.size*32;i++)
+	word * table = stfile(d,dir);
+	byte sects = (dir.size%512) ? (dir.size/512)+1 : (dir.size/512);
+	for(int i = 0; i<sects;i++)
 	{
-		file_struct f = dir_read(fs,dir,i);
-		if(!memcmp(s,f.name,12))
+		for(int j = 0;j<512;j+=16)
 		{
-			return f;
+			fstruct f = dirread(d,table[i]*512+j);
+			if(!memcmp(&f,s,12))
+			{
+				int result = table[i]*512+j;
+				free(table);
+				return result;
+			}
 		}
 	}
-	file_struct f= dir_null();
-	return f;
+	free(table);
+	return 0;
+}
+
+//расширяет файл, 0 если нет места, или новый сектор
+word dirinc(dstruct d,int ptr)
+{
+	word s = stfree(d);
+	if(s==0) return 0;
+	fstruct file = dirread(d,ptr);
+	if(file.size==0)
+	{
+		file.ptr = s;
+	} else
+	{
+		word * table = stfile(d,file);
+		st_write(fs,table[file.size-1],s);
+		free(table);
+	}
+	st_write(fs,s,s);
+	file.size++;
+	return file;
+}
+
+file_struct file_sub(fs_struct fs, file_struct file)
+{
+	if(file.size!=0)
+	{
+		sector * table = file_sectors(fs,file);
+		st_write(fs,table[file.size-1],0);
+		if(file.size==1)
+		{
+			file.ptr=0;
+		} else
+		{
+			st_write(fs,table[file.size-2],table[file.size-2]);
+		}
+		file.size--;
+		free(table);
+	}
+	return file;
 }

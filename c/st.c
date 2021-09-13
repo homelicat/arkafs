@@ -1,28 +1,42 @@
 #include "../h/types.h"
-#include "../h/driveio.h"
+#include "../h/dio.h"
+#include <stdlib.h>
 
-void st_write(fs_struct fs,st_ptr ptr, word data)
+//запись в таблицу секторов
+void stwrite(dstruct d,word sect, word data)
 {	
-	word_write(fs,1,ptr*2,data);
+	dwrite(d,(sect*2)+512,&data,2);
 }
 
-word st_read(fs_struct fs,st_ptr ptr)
+//чтение из таблицы секторов
+word stread(dstruct d,word sect)
 {
 	word result;
-	result = word_read(fs,1,ptr*2);
+	dread(d,(sect*2)+512,&result,2);
 	return result;
 }
 
-st_ptr st_free(fs_struct fs)
+//поиск свободного сектора в таблице секторов, если нет, возвращает размер диска
+word stfree(dstruct d)
 {
-	st_ptr ptr;
-	for (ptr = 1; ptr<fs.size+1;ptr++)
+	word result;
+	for (result = 1; result<d.size+1;result++)
 	{
-		word state;
-		if (ptr == fs.size)break;
-		state = st_read(fs,ptr);
-		if (state==0) break;
+		if(result==d.size)break;
+		if(stread(d,result)==0)break;
 	}
-	if (ptr==fs.size) return 0;
-	return ptr;
+	return result;
+}
+
+//создает таблицу файловых секторов, 0 если файл пуст
+word * stfile(dstruct d, fstruct file)
+{
+	if (file.size==0) return 0;
+	word * table = malloc(file.size/512);
+	table[0]=file.ptr;
+	for(int i = 1;i<file.size/512;i++)
+	{
+		table[i]=stread(d,table[i-1]);
+	}
+	return table;
 }
