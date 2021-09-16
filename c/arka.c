@@ -8,57 +8,72 @@
 #include "../h/dir.h"
 #include "../h/debug.h"
 
-file_struct arkapath(dstruct d, char * ipath)
+//возвращает указатель на файл по пути, 0 если файл не существует
+int arkapath(dstruct d, char * ipath)
 {
-	if(ipath[0]!='/')return dir_null();
-	if(strlen(ipath)==1)return dir_root(fs);
+	if(ipath[0]!='/')
+	{
+		return 0;
+	}
+	if(strlen(ipath)==1)return (d.sts+1)*512;
 	char * path = malloc(strlen(ipath));
 	strcpy(path,ipath+1);
-	file_struct cur = dir_root(fs);
+	int cur = (d.sts+1)*512;
 	char * name = strtok(path,"/");
 	while (name != NULL)
 	{
-		cur = dir_search(fs,cur,name);
-		if(cur.name[0]==0)return cur;
+		fstruct dir = dirread(d,cur);
+		cur = dirsearch(d,dir,name);
+		if(cur==0)return cur;
 		name = strtok(NULL,"/");
    	}
 	return cur;
 }
 
-void arka_new(char * name,int size)
+//создает диск
+void arkanew(char * name,int size)
 {
-	fs_create(name,size);
+	dcreate(name,size);
 }
 
-void arka_dir(char * name, char * path)
+//выводит содержимое директории
+void arkalist(char * name, char * path)
 {
-	fs_struct fs = fs_open(name);
-	file_struct dir = arka_path(fs,path);
-	if(dir.name[0]==0)
+	dstruct d = dopen(name);
+	int ptr = arkapath(d,path);
+	if(ptr==0)
 	{
 		puts("Dir not found");
-		fs_close(fs);
+		dclose(d);
 		return;
 	}
-	for (int i = 0; i<dir.size*32;i++)
+	fstruct dir = dirread(d,ptr);
+	word * table = stfile(d,dir);
+	for (int i = 0; i<dir.size/512+1;i++)
 	{
-		file_struct f = dir_read(fs,dir,i);
-		if(f.name[0]==0) continue;
-		for(int k = 0; k<12;k++)
+		for(int j = 0;j<512;j+=16)
 		{
-			if(f.name[k]==0)
+			fstruct f = dirread(d,table[i]*512+j);
+			if(f.name[0]==0) continue;
+			for(int k = 0; k<12;k++)
 			{
-				putchar(' ');
-			} else
-			{
-				putchar(f.name[k]);
+				if(f.name[k]==0)
+				{
+					putchar(' ');
+				} else
+				{
+					putchar(f.name[k]);
+				}
 			}
+			printf(" %X %X\n",f.ptr,f.size);
 		}
-		printf(" %X %X\n",f.ptr,f.size);
 	}
-	fs_close(fs);
+	free(table);
+	dclose(d);
 }
 
+//TODO UNDER
+//пишет в файл
 void arka_write(char * name,char * path)
 {
 	fs_struct fs = fs_open(name);
@@ -98,6 +113,7 @@ void arka_write(char * name,char * path)
 	fs_close(fs);
 }
 
+//читает из файла
 void arka_read(char * name, char * path)
 {
 	fs_struct fs = fs_open(name);
@@ -120,6 +136,7 @@ void arka_read(char * name, char * path)
 	fs_close(fs);
 }
 
+//удаляет файл
 void arka_del(char * name, char * path)
 {
 	fs_struct fs = fs_open(name);
@@ -163,5 +180,4 @@ void arka_del(char * name, char * path)
 	}
 	free(table);
 	fs_close(fs);
-}
-*/
+}*/

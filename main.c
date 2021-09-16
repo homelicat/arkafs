@@ -11,6 +11,7 @@
 
 void main(/*int argc, char * argv[]*/)
 {
+	/*
 	dcreate("test.img",16);
 	dstruct d = dopen("test.img");
 	fstruct f;
@@ -21,7 +22,6 @@ void main(/*int argc, char * argv[]*/)
 	dirwrite(d,f,ptr);
 	dirinc(d,ptr);
 	dirinc(d,ptr);
-	dclose(d);
-	//arka_new("test.img",16);
-	//arka_read("test.img","/");
+	dclose(d);*/
+	arkalist("test.img","/");
 }
