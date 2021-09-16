@@ -12,6 +12,16 @@
 void main(/*int argc, char * argv[]*/)
 {
 	dcreate("test.img",16);
+	dstruct d = dopen("test.img");
+	fstruct f;
+	bzero(&f,16);
+	memcpy(&f,"test",4);
+	fstruct root = dirread(d,(d.sts+1)*512);
+	int ptr = dirfree(d,root);
+	dirwrite(d,f,ptr);
+	dirinc(d,ptr);
+	dirinc(d,ptr);
+	dclose(d);
 	//arka_new("test.img",16);
 	//arka_read("test.img","/");
 }

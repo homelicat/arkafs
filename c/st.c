@@ -16,14 +16,18 @@ word stread(dstruct d,word sect)
 	return result;
 }
 
-//поиск свободного сектора в таблице секторов, если нет, возвращает размер диска
+//поиск свободного сектора в таблице секторов,0 если нет
 word stfree(dstruct d)
 {
-	word result;
-	for (result = 1; result<d.size+1;result++)
+	word result = 0;
+	for (int i = 1; i<d.size+1;i++)
 	{
-		if(result==d.size)break;
-		if(stread(d,result)==0)break;
+		if(i==d.size)break;
+		if(stread(d,i)==0)
+		{
+			result = i;
+			break;
+		}
 	}
 	return result;
 }
@@ -31,12 +35,17 @@ word stfree(dstruct d)
 //создает таблицу файловых секторов, 0 если файл пуст
 word * stfile(dstruct d, fstruct file)
 {
-	if (file.size==0) return 0;
-	word * table = malloc(file.size/512);
-	table[0]=file.ptr;
-	for(int i = 1;i<file.size/512;i++)
+	if ((file.size==0)&&(file.ptr==0))
 	{
-		table[i]=stread(d,table[i-1]);
+		return 0;
+	} else
+	{
+		word * table = malloc((file.size/512+1)*2);
+		table[0]=file.ptr;
+		for(int i = 1;i<file.size/512+1;i++)
+		{
+			table[i]=stread(d,table[i-1]);
+		}
+		return table;
 	}
-	return table;
 }

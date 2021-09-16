@@ -7,8 +7,8 @@
 #include "../h/st.h"
 #include "../h/dir.h"
 #include "../h/debug.h"
-/*
-file_struct arka_path(fs_struct fs, char * ipath)
+
+file_struct arkapath(dstruct d, char * ipath)
 {
 	if(ipath[0]!='/')return dir_null();
 	if(strlen(ipath)==1)return dir_root(fs);

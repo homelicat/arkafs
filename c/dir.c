@@ -23,7 +23,7 @@ void dirwrite(dstruct d,fstruct file,int ptr)
 int dirfree(dstruct d,fstruct dir)
 {
 	word * table = stfile(d,dir);
-	for (int i = 0; i<dir.size/512;i++)
+	for (int i = 0; i<dir.size/512+1;i++)
 	{
 		for(int j = 0;j<512;j+=16)
 		{
@@ -46,7 +46,7 @@ int dirsearch(dstruct d,fstruct dir,char * name)
 	char s[12]={0};
 	memcpy(s,name,strlen(name));
 	word * table = stfile(d,dir);
-	byte sects = (dir.size%512) ? (dir.size/512)+1 : (dir.size/512);
+	byte sects = (dir.size/512)+1;
 	for(int i = 0; i<sects;i++)
 	{
 		for(int j = 0;j<512;j+=16)
@@ -64,7 +64,7 @@ int dirsearch(dstruct d,fstruct dir,char * name)
 	return 0;
 }
 
-//расширяет файл, 0 если нет места, или новый сектор
+//увеличивает файл, 0 если нет места, или новый сектор
 word dirinc(dstruct d,int ptr)
 {
 	word s = stfree(d);
@@ -76,29 +76,25 @@ word dirinc(dstruct d,int ptr)
 	} else
 	{
 		word * table = stfile(d,file);
-		st_write(fs,table[file.size-1],s);
+		stwrite(d,table[file.size/512],s);
 		free(table);
 	}
-	st_write(fs,s,s);
-	file.size++;
-	return file;
+	file.size += 512-(file.size%512);
+	stwrite(d,s,s);
+	dirwrite(d,file,ptr);
+	return s;
 }
 
-file_struct file_sub(fs_struct fs, file_struct file)
+//уменьшает файл, 0 если файл пуст
+word dirdec(dstruct d, int ptr)
 {
-	if(file.size!=0)
-	{
-		sector * table = file_sectors(fs,file);
-		st_write(fs,table[file.size-1],0);
-		if(file.size==1)
-		{
-			file.ptr=0;
-		} else
-		{
-			st_write(fs,table[file.size-2],table[file.size-2]);
-		}
-		file.size--;
-		free(table);
-	}
-	return file;
+	fstruct file = dirread(d,ptr);
+	if(file.size==0) return 0;
+	word * table = stfile(d,file);
+	stwrite(d,table[file.size/512],0);
+	if(file.size/512==0)file.ptr=0;
+	if(file.size/512>0)stwrite(d,table[file.size/512-1],table[file.size/512-1]);
+	file.size -= file.size%512;
+	free(table);
+	dirwrite(d,file,ptr);
 }
