@@ -32,20 +32,14 @@ word stfree(dstruct d)
 	return result;
 }
 
-//создает таблицу файловых секторов, 0 если файл пуст
+//создает таблицу файловых секторов
 word * stfile(dstruct d, fstruct file)
 {
-	if ((file.size==0)&&(file.ptr==0))
+	word * table = malloc((file.size/512+1)*2);
+	table[0]=file.ptr;
+	for(int i = 1;i<file.size/512+1;i++)
 	{
-		return 0;
-	} else
-	{
-		word * table = malloc((file.size/512+1)*2);
-		table[0]=file.ptr;
-		for(int i = 1;i<file.size/512+1;i++)
-		{
-			table[i]=stread(d,table[i-1]);
-		}
-		return table;
+		table[i]=stread(d,table[i-1]);
 	}
+	return table;
 }
