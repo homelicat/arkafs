@@ -33,11 +33,11 @@ word stfree(dstruct d)
 }
 
 //создает таблицу файловых секторов
-word * stfile(dstruct d, fstruct file)
+word * stfile(dstruct d, fstruct f)
 {
-	word * table = malloc((file.size/512+1)*2);
-	table[0]=file.ptr;
-	for(int i = 1;i<file.size/512+1;i++)
+	word * table = malloc((f.size/512+1)*2);
+	table[0]=f.ptr;
+	for(int i = 1;i<f.size/512+1;i++)
 	{
 		table[i]=stread(d,table[i-1]);
 	}

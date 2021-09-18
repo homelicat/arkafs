@@ -7,7 +7,12 @@
 #include "../h/st.h"
 #include "../h/dir.h"
 #include "../h/debug.h"
-#include "../h/arka.h"
+
+typedef struct
+{
+	dstruct d;
+	int cur;
+}arka;
 
 //создает диск
 void arkanew(char * name,int size)
@@ -34,13 +39,13 @@ void arkaumount(arka a)
 void arkalist(arka a)
 {
 	int ptr = a.cur;
-	fstruct dir = dirread(d,ptr);
-	word * table = stfile(d,dir);
+	fstruct dir = dirread(a.d,ptr);
+	word * table = stfile(a.d,dir);
 	for (int i = 0; i<dir.size/512+1;i++)
 	{
 		for(int j = 0;j<512;j+=16)
 		{
-			fstruct f = dirread(d,table[i]*512+j);
+			fstruct f = dirread(a.d,table[i]*512+j);
 			if(f.name[0]==0) continue;
 			for(int k = 0; k<12;k++)
 			{
@@ -63,35 +68,71 @@ int arkacd(arka a, char * name)
 {
 	fstruct dir = dirread(a.d,a.cur);
 	int ptr = dirsearch(a.d,dir,name);
-	if(ptr==)return 0;
+	if(ptr==0)return 0;
 	a.cur=ptr;
 	return 1;
 }
 
-//TODO пишет в файл,0 если нет места
-void arkawrite(arka a,char * name)
+//удаляет файл, 0 если файл не существует
+int arkadel(arka a,char * name)
+{
+	fstruct dir = dirread(a.d,a.cur);
+	int ptr = dirsearch(a.d,dir,name);
+	if(ptr==0)return 0;
+	fstruct f = dirread(a.d,ptr);
+	word * table = stfile(a.d,f);
+	for(int i = 0;i<f.size/512+1;i++)
+	{
+		stwrite(a.d,table[i],0);
+	}
+	free(table);
+	bzero(&f,16);
+	dirwrite(a.d,f,ptr);
+	return 1;
+}
+
+//пишет в файл,0 если нет места,1 если место закончилось еще при записи, 2 если все успешно
+int arkawrite(arka a,char * name)
 {
 	arkadel(a,name);
 	fstruct dir = dirread(a.d,a.cur);
 	int fre = dirfree(a.d,dir);
 	if(fre==0)return 0;
-	fstruct file;
-	bzero(&file,16);
-	memcpy(&file.name,name,strlen(name));
+	fstruct f;
+	bzero(&f,16);
+	memcpy(&f.name,name,strlen(name));
 	word ptr = stfree(a.d);
 	if(ptr==0)return 0;
-	file.ptr=ptr;
-	stwrite(a.d,ptr,ptr);
-	//dirwrite(a.d,file,fre);
+	f.ptr=ptr;
+
 	char c;
 	word cursect = ptr;
+	int curptr = 0;
+	word nextsect = 0;
 	while((c=getchar())!=EOF)
 	{
-		int infileptr=cursect*512+(file.size%512);
-		dwrite(a.d,infileptr,&c,1);
-		file.size++;
-		if(file.size
+		dwrite(a.d,cursect*512+curptr,&c,1);
+		f.size++;
+		curptr++;
+		if(curptr==511)
+		{
+			nextsect=stfree(a.d);
+			if(nextsect==0)
+			{	
+				stwrite(a.d,cursect,cursect);
+				return 1;
+			}
+		}
+		if(curptr==512)
+		{
+			curptr=0;
+			stwrite(a.d,cursect,nextsect);
+			cursect=nextsect;
+		}
 	}
+	stwrite(a.d,cursect,cursect);
+	dirwrite(a.d,f,fre);
+	return 2;
 }
 
 //читает из файла, 0 если файл не существует
@@ -100,11 +141,11 @@ int arkaread(arka a,char * name)
 	fstruct dir = dirread(a.d,a.cur);
 	int ptr = dirsearch(a.d,dir,name);
 	if(ptr==0)return 0;
-	fstruct file = dirread(a.d,ptr);
-	word * table = stfile(a.d,file);
-	for(int i = 0;i<file.size/512+1;i++)
+	fstruct f = dirread(a.d,ptr);
+	word * table = stfile(a.d,f);
+	for(int i = 0;i<f.size/512+1;i++)
 	{
-		if(i<file.size/512)
+		if(i<f.size/512)
 		{
 			for(int j=0;j<512;j++)
 			{
@@ -114,7 +155,7 @@ int arkaread(arka a,char * name)
 			}
 		} else
 		{
-			for(int j = 0;j<file.size%512;j++)
+			for(int j = 0;j<f.size%512;j++)
 			{
 				byte c;
 				dread(a.d,table[i]*512+j,&c,1);
@@ -127,20 +168,9 @@ int arkaread(arka a,char * name)
 	return 1;
 }
 
-//удаляет файл, 0 если файл не существует
-int arkadel(arka a,char * name)
+//создает директориюб 0 если нет места
+int arkadir(arka a,char *name)
 {
-	fstruct dir = dirread(a.d,a.cur);
-	int ptr = dirsearch(a.d,dir,name);
-	if(ptr==0)return 0;
-	fstruct file = dirread(a.d,ptr);
-	word * table = stfile(a.d,file);
-	for(int i = 0;i<file.size/512+1;i++)
-	{
-		stwrite(a.d,table[i],0);
-	}
-	free(table);
-	bzero(&file,16);
-	dirwrite(a.d,file,ptr);
-	return 1;
+
+
 }

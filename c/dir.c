@@ -1,6 +1,7 @@
 #include "../h/types.h"
 #include "../h/dio.h"
 #include "../h/st.h"
+//#include "../h/dir.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,15 +9,15 @@
 //считывает файловую структуру
 fstruct dirread(dstruct d,int ptr)
 {
-	fstruct file;
-	dread(d,ptr,&file,16);
-	return file;
+	fstruct f;
+	dread(d,ptr,&f,16);
+	return f;
 }
 
 //записывает файловую структуру
-void dirwrite(dstruct d,fstruct file,int ptr)
+void dirwrite(dstruct d,fstruct f,int ptr)
 {
-	dwrite(d,ptr,&file,16);
+	dwrite(d,ptr,&f,16);
 }
 
 //ищет пустую ячейку в директории, 0 если нет
@@ -69,32 +70,32 @@ word dirinc(dstruct d,int ptr)
 {
 	word s = stfree(d);
 	if(s==0) return 0;
-	fstruct file = dirread(d,ptr);
-	if(file.size==0)
+	fstruct f = dirread(d,ptr);
+	if(f.size==0)
 	{
-		file.ptr = s;
+		f.ptr = s;
 	} else
 	{
-		word * table = stfile(d,file);
-		stwrite(d,table[file.size/512],s);
+		word * table = stfile(d,f);
+		stwrite(d,table[f.size/512],s);
 		free(table);
 	}
-	file.size += 512-(file.size%512);
+	f.size += 512-(f.size%512);
 	stwrite(d,s,s);
-	dirwrite(d,file,ptr);
+	dirwrite(d,f,ptr);
 	return s;
 }
 
 //уменьшает файл, 0 если файл пуст
 word dirdec(dstruct d, int ptr)
 {
-	fstruct file = dirread(d,ptr);
-	if(file.size==0) return 0;
-	word * table = stfile(d,file);
-	stwrite(d,table[file.size/512],0);
-	if(file.size/512==0)file.ptr=0;
-	if(file.size/512>0)stwrite(d,table[file.size/512-1],table[file.size/512-1]);
-	file.size -= file.size%512;
+	fstruct f = dirread(d,ptr);
+	if(f.size==0) return 0;
+	word * table = stfile(d,f);
+	stwrite(d,table[f.size/512],0);
+	if(f.size/512==0)f.ptr=0;
+	if(f.size/512>0)stwrite(d,table[f.size/512-1],table[f.size/512-1]);
+	f.size -= f.size%512;
 	free(table);
-	dirwrite(d,file,ptr);
+	dirwrite(d,f,ptr);
 }
