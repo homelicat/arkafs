@@ -33,7 +33,7 @@ void dcreate(char * name, word size)
 	dwrite(d,(sts+1)*512,"#",1);
 	word data = sts+1;
 	dwrite(d,(sts+1)*512+12,&data,2);
-	data = 16;
+	data = 0;
 	dwrite(d,(sts+1)*512+14,&data,2);
 	data = 0;
 	dwrite(d,(size*512)-1,&data,1);

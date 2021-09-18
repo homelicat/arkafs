@@ -67,7 +67,7 @@ void arkalist(arka a)
 int arkacd(arka a, char * name)
 {
 	fstruct dir = dirread(a.d,a.cur);
-	int ptr = dirsearch(a.d,dir,name);
+	int ptr = dirsearch(a.d,a.cur,name);
 	if(ptr==0)return 0;
 	a.cur=ptr;
 	return 1;
@@ -77,7 +77,7 @@ int arkacd(arka a, char * name)
 int arkadel(arka a,char * name)
 {
 	fstruct dir = dirread(a.d,a.cur);
-	int ptr = dirsearch(a.d,dir,name);
+	int ptr = dirsearch(a.d,a.cur,name);
 	if(ptr==0)return 0;
 	fstruct f = dirread(a.d,ptr);
 	word * table = stfile(a.d,f);
@@ -96,7 +96,7 @@ int arkawrite(arka a,char * name)
 {
 	arkadel(a,name);
 	fstruct dir = dirread(a.d,a.cur);
-	int fre = dirfree(a.d,dir);
+	int fre = dirfree(a.d,a.cur);
 	if(fre==0)return 0;
 	fstruct f;
 	bzero(&f,16);
@@ -139,7 +139,7 @@ int arkawrite(arka a,char * name)
 int arkaread(arka a,char * name)
 {
 	fstruct dir = dirread(a.d,a.cur);
-	int ptr = dirsearch(a.d,dir,name);
+	int ptr = dirsearch(a.d,a.cur,name);
 	if(ptr==0)return 0;
 	fstruct f = dirread(a.d,ptr);
 	word * table = stfile(a.d,f);
@@ -168,7 +168,7 @@ int arkaread(arka a,char * name)
 	return 1;
 }
 
-//создает директориюб 0 если нет места
+//создает директорию 0 если нет места
 int arkadir(arka a,char *name)
 {
 

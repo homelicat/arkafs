@@ -6,6 +6,8 @@
 
 void main(/*int argc, char * argv[]*/)
 {
+	arkanew("test.img",16);
 	arka a = arkamount("test.img");
-	arkalist(a);
+	arkawrite(a,"test");
+	arkaread(a,"test");
 }
