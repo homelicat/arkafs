@@ -1,7 +1,6 @@
-#include "../h/types.h"
+#include "../h/dtypes.h"
 #include "../h/dio.h"
 #include "../h/st.h"
-//#include "../h/dir.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

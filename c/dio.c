@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../h/types.h"
+#include "../h/dtypes.h"
 #include "../h/st.h"
 
 //запись на диск

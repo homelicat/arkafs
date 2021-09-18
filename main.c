@@ -1,13 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <malloc.h>
-#include <string.h>
+#include "h/dtypes.h"
+#include "h/arkatypes.h"
 #include "h/arka.h"
+#include <stdio.h>
 
-void main(/*int argc, char * argv[]*/)
+void main()
 {
 	arkanew("test.img",16);
 	arka a = arkamount("test.img");
-	arkawrite(a,"test");
-	arkaread(a,"test");
+	arkadir(&a,"newdir");
+	arkacd(&a,"#newdir");
+	arkawrite(&a,"test");
+	arkalist(&a);
+	arkacd(&a,"#");
+	arkalist(&a);
+	arkaumount(&a);
 }
